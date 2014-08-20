@@ -1,0 +1,14 @@
+{
+  "name" : "MPR Monitor",
+  "description" : "Computes and monitors Medication Possession Ratio (MPR) and checks for 30-day fulfillment gaps",
+  "author" : "William Bosl, Children's Hospital Boston",
+  "id" : "mpr-monitor@apps.smartplatforms.org",
+  "version" : ".1a",
+
+  "mode" : "ui",
+  "scope" : "record",
+
+  "index" :  "http://localhost:9002/smartapp/index.html",
+  "oauth_callback": "http://localhost:9002/smartapp/authorize",
+  "icon" :  "http://localhost:9002/smartapp/icon.png"
+}
