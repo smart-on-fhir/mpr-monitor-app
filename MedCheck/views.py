@@ -71,7 +71,7 @@ def index(request):
         assert dispense['contained'][0]['resourceType'] == 'Medication'
         name = dispense['contained'][0]['name']
         assert dispense['dispense'][0]['status'] == 'completed'
-        quant = dispense['dispense'][0]['quantity']['value']
+        quant = list(ext['valueQuantity']['value'] for ext in dispense['dispense'][0]['extension'] if ext['url'] == 'http://fhir-registry.smartplatforms.org/Profile/dispense#days-supply')[0]
         when = dispense['dispense'][0]['whenHandedOver']
         pills.append((None,name,quant,when))
 
