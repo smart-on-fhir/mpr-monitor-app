@@ -35,7 +35,7 @@ import logging
 import urllib
 import mpr_monitor.settings as settings
 import adherenceTests
-from fhir_client.client import FHIRClient
+from fhirclient import Client as FHIRClient
 logging.basicConfig(level=logging.DEBUG)  # cf. .INFO or commented out
 
 # SMART on FHIR Server Endpoint Configuration
