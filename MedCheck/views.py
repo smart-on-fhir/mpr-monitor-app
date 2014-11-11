@@ -35,7 +35,8 @@ import logging
 import urllib
 import mpr_monitor.settings as settings
 import adherenceTests
-from fhirclient import Client as FHIRClient
+from fhirclient import client
+from fhirclient.models.medicationdispense import MedicationDispense
 logging.basicConfig(level=logging.DEBUG)  # cf. .INFO or commented out
 
 # SMART on FHIR Server Endpoint Configuration
@@ -46,6 +47,13 @@ ISO_8601_DATETIME = '%Y-%m-%d'
 last_pill_dates = {}
 Global_PATIENT_ID = 0
 Global_ADHERE_VARS = 0
+
+def _med_name(dispense):
+    if dispense.medication and dispense.medication.resolved and dispense.medication.resolved.name:
+        return dispense.medication.resolved.name
+    if dispense.medication and dispense.medication.display:
+        return dispense.medication.display
+    raise Exception("Cannot determine medication name")
 
 #===========================================
 # The index page is the generally the first
@@ -58,24 +66,30 @@ def index(request):
     global Global_PATIENT_ID 
     global Global_ADHERE_VARS 
 
-    client = FHIRClient(state=request.session['client_state'], secret=_ENDPOINT['secret'])
+    smart = client.FHIRClient(state=request.session['client_state'])
     record_change_p = True
-    patientID = client.patient_id
+    patientID = smart.patient_id
 
     # Get the medication dispenses for this context
-    dispenses = client.MedicationDispense()
+    dispenses = MedicationDispense.where().patient(patientID).perform(smart.server)
 
     pills = []
 
     for dispense in dispenses:
-        assert dispense['contained'][0]['resourceType'] == 'Medication'
-        name = dispense['contained'][0]['name']
-        assert dispense['dispense'][0]['status'] == 'completed'
-        quant = list(ext['valueQuantity']['value'] for ext in dispense['dispense'][0]['extension'] if ext['url'] == 'http://fhir-registry.smartplatforms.org/Profile/dispense#days-supply')[0]
-        when = dispense['dispense'][0]['whenHandedOver']
+        d = dispense.dispense[0]
+        
+        # TO DO Temporary workaround - need to use 'resolved' as in 'd.medication.resolved.name',
+        # but it's broken by assuming that the referenced contained resources are in the 
+        # parent object (which is not the case here)
+        name = dispense.contained[d.medication.processedReferenceIdentifier()].json['name']
+        #name = _med_name(d)
+        
+        assert d.status == 'completed'
+        quant = list(ext.valueQuantity.value for ext in d.extension if ext.url == 'http://fhir-registry.smartplatforms.org/Profile/dispense#days-supply')[0]
+        when = d.whenHandedOver.isostring
         pills.append((None,name,quant,when))
 
-    birthday, patient_name = get_birthday_name(client)
+    birthday, patient_name = get_birthday_name(smart)
     drug = 'all'
 
     # We only want to call the adherence_check once for a specific patient
@@ -110,31 +124,34 @@ def index(request):
 
 def launch(request):
     iss = request.GET.get('iss')
-    fhirServiceUrl = request.GET.get('fhirServiceUrl')
-
+    
     if iss:
-        api_base = iss
-        security_mode = 'oauth'
-        app_url = _ENDPOINT['app_base'] + "authorize.html"
-    elif fhirServiceUrl:
-        api_base = fhirServiceUrl
-        security_mode = None
-        app_url = _ENDPOINT['app_base'] + "index.html"
+        _ENDPOINT.update({
+            'api_base': iss,
+            'auth_type': 'oauth2',
+            'launch_token': request.GET.get('launch'),
+            'redirect_uri': _ENDPOINT['app_base'] + "authorize.html"
+        })
+        smart = client.FHIRClient(settings=_ENDPOINT)
+        auth_url = smart.authorize_url
+        request.session['client_state']  = smart.state # TO DO: encrypt the state to protect app secrets
+        return redirect(auth_url)
+        
+    fhirServiceUrl = request.GET.get('fhirServiceUrl')
+        
+    if fhirServiceUrl:
+        _ENDPOINT['api_base'] = fhirServiceUrl
+        _ENDPOINT['patient_id'] = request.GET.get('patientId')
+        _ENDPOINT['auth_type'] = 'none'
+        smart = client.FHIRClient(settings=_ENDPOINT)
+        redirect_url = _ENDPOINT['app_base'] + "index.html"
+        request.session['client_state']  = smart.state # TO DO: encrypt the state to protect app secrets
+        return redirect(redirect_url)
     
-    client = FHIRClient (app_id=_ENDPOINT['app_id'], app_url=app_url, api_base=api_base,
-                 scope=_ENDPOINT['scope'], launch_token=request.GET.get('launch'), 
-                 security_mode=security_mode, secret=_ENDPOINT['secret'])
-    
-    # TO DO: encrypt the state to protect app secrets
-    request.session['client_state']  = client.state
-    
-    return redirect(client.authorize_url)
-    
-def authorize(request):
-    client = FHIRClient(state=request.session['client_state'], secret=_ENDPOINT['secret'])
-    client.update_access_token(request.GET.get('code'))
-    request.session['client_state'] = client.state
-    #return redirect(reverse('index'))
+def authorize(request):    
+    smart = client.FHIRClient(state=request.session['client_state'])
+    smart.handle_callback(request.build_absolute_uri())
+    request.session['client_state'] = smart.state
     return redirect('index.html')
 
 #===================================================
@@ -154,19 +171,25 @@ def risk(request):
     drug = request.GET.get('drug', 'all')
        
     # Current context information
-    client = FHIRClient(state=request.session['client_state'], secret=_ENDPOINT['secret'])
+    smart = client.FHIRClient(state=request.session['client_state'])
 
     # Get the medication dispenses for this context
-    dispenses = client.MedicationDispense()
+    dispenses = MedicationDispense.where().patient(smart.patient_id).perform(smart.server)
 
     pills = []
-
+        
     for dispense in dispenses:
-        assert dispense['contained'][0]['resourceType'] == 'Medication'
-        name = dispense['contained'][0]['name']
-        assert dispense['dispense'][0]['status'] == 'completed'
-        quant = dispense['dispense'][0]['quantity']['value']
-        when = dispense['dispense'][0]['whenHandedOver']
+        d = dispense.dispense[0]
+        
+        # TO DO this isn't right - need to use 'resolved' as in 'd.medication.resolved.name',
+        # but it's broken by assuming that the referenced contained resources are in the 
+        # parent object (which is not the case here)
+        name = dispense.contained[d.medication.processedReferenceIdentifier()].json['name']
+        #name = _med_name(d)
+        
+        assert d.status == 'completed'
+        quant = list(ext.valueQuantity.value for ext in d.extension if ext.url == 'http://fhir-registry.smartplatforms.org/Profile/dispense#days-supply')[0]
+        when = d.whenHandedOver.isostring
         pills.append((None,name,quant,when))
     
     # The the fulfillment gap and MPR prediction data    
@@ -255,7 +278,7 @@ def choose_med(request):
 def get_birthday_name(client):
     """Function to get birthday and patient name from the client records and return them."""
 	    
-    patient = client.Patient()
-    patient_name = ' '.join((patient['name'][0]['given'][0], patient['name'][0]['family'][0]))
-    birthday = patient['birthDate']   
+    patient = client.patient
+    patient_name = client.human_name(patient.name[0])
+    birthday = patient.birthDate.isostring
     return birthday, patient_name

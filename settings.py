@@ -36,9 +36,7 @@ MANAGERS = ADMINS
 #SMART on FHIR Server Endpoint
 ENDPOINT = {
     'app_id': 'my_web_app',
-    'app_base': 'http://localhost:8000/fhir-app/',
-    'scope':  'patient/*.read',
-    'secret': ''
+    'app_base': 'http://localhost:8000/fhir-app/'
 }
 
 # Used to assign relative paths
