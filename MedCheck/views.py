@@ -129,6 +129,7 @@ def launch(request):
         _ENDPOINT.update({
             'api_base': iss,
             'auth_type': 'oauth2',
+            'patient_id': None,
             'launch_token': request.GET.get('launch'),
             'redirect_uri': _ENDPOINT['app_base'] + "authorize.html"
         })
