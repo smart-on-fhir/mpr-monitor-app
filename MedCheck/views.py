@@ -77,12 +77,7 @@ def index(request):
 
     for dispense in dispenses:
         d = dispense.dispense[0]
-        
-        # TO DO Temporary workaround - need to use 'resolved' as in 'd.medication.resolved.name',
-        # but it's broken by assuming that the referenced contained resources are in the 
-        # parent object (which is not the case here)
-        name = dispense.contained[d.medication.processedReferenceIdentifier()].json['name']
-        #name = _med_name(d)
+        name = d.medication.resolved.name
         
         assert d.status == 'completed'
         quant = list(ext.valueQuantity.value for ext in d.extension if ext.url == 'http://fhir-registry.smarthealthit.org/Profile/dispense#days-supply')[0]
@@ -181,12 +176,7 @@ def risk(request):
         
     for dispense in dispenses:
         d = dispense.dispense[0]
-        
-        # TO DO this isn't right - need to use 'resolved' as in 'd.medication.resolved.name',
-        # but it's broken by assuming that the referenced contained resources are in the 
-        # parent object (which is not the case here)
-        name = dispense.contained[d.medication.processedReferenceIdentifier()].json['name']
-        #name = _med_name(d)
+        name = d.medication.resolved.name
         
         assert d.status == 'completed'
         quant = list(ext.valueQuantity.value for ext in d.extension if ext.url == 'http://fhir-registry.smarthealthit.org/Profile/dispense#days-supply')[0]
