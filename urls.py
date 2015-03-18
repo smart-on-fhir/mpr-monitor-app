@@ -13,10 +13,10 @@
 
     Purpose:
     
-    This file is part of a Django-based SMArt application that implements
+    This file is part of a Django-based SMART application that implements
     a two-step test for medication adherence. It is intended to be used as
-    a SMArt web application within the context of a SMArt container. See
-    http://www.smartplatforms.org/ for detailed information about SMArt applications.
+    a SMART web application within the context of a SMART container. See
+    http://www.smarthealthit.org/ for detailed information about SMART applications.
         
     License information should go here.
 

@@ -16,7 +16,7 @@
     This file is part of a Django-based SMArt application that implements
     a two-step test for medication adherence. It is intended to be used as
     a SMArt web application within the context of a SMArt container. See
-    http://www.smartplatforms.org/ for detailed information about SMArt applications.
+    http://www.smarthealthit.org/ for detailed information about SMART applications.
         
     License information should go here.
 
@@ -85,7 +85,7 @@ def index(request):
         #name = _med_name(d)
         
         assert d.status == 'completed'
-        quant = list(ext.valueQuantity.value for ext in d.extension if ext.url == 'http://fhir-registry.smartplatforms.org/Profile/dispense#days-supply')[0]
+        quant = list(ext.valueQuantity.value for ext in d.extension if ext.url == 'http://fhir-registry.smarthealthit.org/Profile/dispense#days-supply')[0]
         when = d.whenHandedOver.isostring
         pills.append((None,name,quant,when))
 
@@ -189,7 +189,7 @@ def risk(request):
         #name = _med_name(d)
         
         assert d.status == 'completed'
-        quant = list(ext.valueQuantity.value for ext in d.extension if ext.url == 'http://fhir-registry.smartplatforms.org/Profile/dispense#days-supply')[0]
+        quant = list(ext.valueQuantity.value for ext in d.extension if ext.url == 'http://fhir-registry.smarthealthit.org/Profile/dispense#days-supply')[0]
         when = d.whenHandedOver.isostring
         pills.append((None,name,quant,when))
     

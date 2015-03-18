@@ -14,7 +14,7 @@
     Purpose:
     
     Django settings.py for MedAdherePredict project. See
-    http://www.smartplatforms.org/ for detailed information about SMArt applications.
+    http://www.smarthealthit.org/ for detailed information about SMART applications.
         
     License information should go here.
 

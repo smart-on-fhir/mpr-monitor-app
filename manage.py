@@ -13,8 +13,8 @@
 
     Purpose:
     
-    Django manage.py file for SMArt application. See
-    http://www.smartplatforms.org/ for detailed information about SMArt applications.
+    Django manage.py file for SMART application. See
+    http://www.smarthealthit.org/ for detailed information about SMART applications.
         
     License information should go here.
 
