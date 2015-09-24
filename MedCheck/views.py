@@ -37,6 +37,7 @@ import mpr_monitor.settings as settings
 import adherenceTests
 from fhirclient import client
 from fhirclient.models.medicationdispense import MedicationDispense
+from fhirclient.models.medication import Medication
 logging.basicConfig(level=logging.DEBUG)  # cf. .INFO or commented out
 
 # SMART on FHIR Server Endpoint Configuration
@@ -71,16 +72,16 @@ def index(request):
     patientID = smart.patient_id
 
     # Get the medication dispenses for this context
-    dispenses = MedicationDispense.where().patient(patientID).perform(smart.server)
+    dispenses = MedicationDispense.where({'patient': patientID}).perform(smart.server)
 
     pills = []
 
-    for dispense in dispenses:
-        d = dispense.dispense[0]
-        name = d.medication.resolved.name
+    for dispense in dispenses.entry:
+        d = dispense.resource
+        name = d.medication.resolved(Medication).name
         
         assert d.status == 'completed'
-        quant = list(ext.valueQuantity.value for ext in d.extension if ext.url == 'http://fhir-registry.smarthealthit.org/Profile/dispense#days-supply')[0]
+        quant = d.daysSupply.value
         when = d.whenHandedOver.isostring
         pills.append((None,name,quant,when))
 
@@ -170,16 +171,16 @@ def risk(request):
     smart = client.FHIRClient(state=request.session['client_state'])
 
     # Get the medication dispenses for this context
-    dispenses = MedicationDispense.where().patient(smart.patient_id).perform(smart.server)
+    dispenses = MedicationDispense.where({'patient': smart.patient_id}).perform(smart.server)
 
     pills = []
         
-    for dispense in dispenses:
-        d = dispense.dispense[0]
-        name = d.medication.resolved.name
+    for dispense in dispenses.entry:
+        d = dispense.resource
+        name = d.medication.resolved(Medication).name
         
         assert d.status == 'completed'
-        quant = list(ext.valueQuantity.value for ext in d.extension if ext.url == 'http://fhir-registry.smarthealthit.org/Profile/dispense#days-supply')[0]
+        quant = d.daysSupply.value
         when = d.whenHandedOver.isostring
         pills.append((None,name,quant,when))
     

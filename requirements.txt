@@ -1,1 +1,2 @@
-fhirclient==0.0.4
+fhirclient==0.5.1
+django==1.4.22
