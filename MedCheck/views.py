@@ -76,14 +76,15 @@ def index(request):
 
     pills = []
 
-    for dispense in dispenses.entry:
-        d = dispense.resource
-        name = d.medication.resolved(Medication).name
-        
-        assert d.status == 'completed'
-        quant = d.daysSupply.value
-        when = d.whenHandedOver.isostring
-        pills.append((None,name,quant,when))
+    if dispenses.entry:
+        for dispense in dispenses.entry:
+            d = dispense.resource
+            name = d.medicationCodeableConcept.coding[0].display
+            
+            assert d.status == 'completed'
+            quant = d.daysSupply.value
+            when = d.whenHandedOver.isostring
+            pills.append((None,name,quant,when))
 
     birthday, patient_name = get_birthday_name(smart)
     drug = 'all'
@@ -175,14 +176,15 @@ def risk(request):
 
     pills = []
         
-    for dispense in dispenses.entry:
-        d = dispense.resource
-        name = d.medication.resolved(Medication).name
-        
-        assert d.status == 'completed'
-        quant = d.daysSupply.value
-        when = d.whenHandedOver.isostring
-        pills.append((None,name,quant,when))
+    if dispenses.entry:
+        for dispense in dispenses.entry:
+            d = dispense.resource
+            name = d.medicationCodeableConcept.coding[0].display
+            
+            assert d.status == 'completed'
+            quant = d.daysSupply.value
+            when = d.whenHandedOver.isostring
+            pills.append((None,name,quant,when))
     
     # The the fulfillment gap and MPR prediction data    
     meds_flags, gaps, refill_data, refill_day = Global_ADHERE_VARS
