@@ -1,2 +1,2 @@
-fhirclient==0.5.1
+fhirclient==1.0.2
 django==1.4.22
