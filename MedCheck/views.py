@@ -150,7 +150,8 @@ def authorize(request):
     smart = client.FHIRClient(state=request.session['client_state'])
     smart.handle_callback(request.build_absolute_uri())
     request.session['client_state'] = smart.state
-    return redirect('index.html')
+    redirect_url = _ENDPOINT['app_base'] + "index.html"
+    return redirect(redirect_url)
 
 #===================================================
 # Creates data and serves information about 
